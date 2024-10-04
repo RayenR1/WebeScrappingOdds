@@ -39,14 +39,18 @@ def scrape_results(base_url, start_season, end_season):
                 tree = html.fromstring(page_source)
 
                 # Attendre que la div contenant "eventRow" soit présente
-                WebDriverWait(driver, 25).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "eventRow")]')))
+                try:
+                    WebDriverWait(driver, 25).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "eventRow")]')))
+                except:
+                    print(f"Erreur : aucune donnée trouvée sur {league} {season}, page {page}. Passer à la saison suivante.")
+                    break  # Passer à la saison suivante si une erreur se produit
 
                 # Chercher toutes les divs avec la classe "eventRow"
                 event_rows = tree.xpath('//div[contains(@class, "eventRow")]')
 
                 if not event_rows:
                     print(f"Aucun élément trouvé pour {league} {season} page {page}")
-                    break  # Sortir de la boucle si aucune donnée trouvée
+                    #break  # Sortir de la boucle si aucune donnée trouvée
 
                 # Afficher les résultats extraits
                 for event_row in event_rows:
