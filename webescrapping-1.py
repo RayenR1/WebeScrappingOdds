@@ -25,12 +25,12 @@ def scrape_results(base_url, start_season, end_season):
             page = 1
             while True:
                 url = f"{base_url}/{league}-{season}/results/#/page/{page}/" if year != 2024 else f"{base_url}/{league}/results/#/page/{page}/"
-                
+                print(url)
                 driver.get(url)  # Charger la page avec Selenium
-                #print(driver.page_source)
-                #print(driver.page_source.encode('utf-8', 'ignore').decode('utf-8'))
+                driver.delete_all_cookies()  
+                driver.refresh() 
  
-                time.sleep(5)  # Attendre quelques secondes pour que le JavaScript s'exécute
+                time.sleep(10)  # Attendre quelques secondes pour que le JavaScript s'exécute
 
                 # Obtenir la source de la page
                 page_source = driver.page_source
@@ -39,7 +39,7 @@ def scrape_results(base_url, start_season, end_season):
                 tree = html.fromstring(page_source)
 
                 # Attendre que la div contenant "eventRow" soit présente
-                WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "group flex")]')))
+                WebDriverWait(driver, 25).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "eventRow")]')))
 
                 # Chercher toutes les divs avec la classe "eventRow"
                 event_rows = tree.xpath('//div[contains(@class, "eventRow")]')
@@ -52,7 +52,9 @@ def scrape_results(base_url, start_season, end_season):
                 for event_row in event_rows:
                     print(event_row.text_content())  # Affiche le texte contenu dans la div
 
-                page += 1  # Passe à la page suivante
+                page += 1 
+
+                 
 
     driver.quit()
 
