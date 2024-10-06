@@ -63,7 +63,10 @@ def scrape_results(base_url, start_season, end_season):
 
 
                     odds_xpath = './/p[@data-v-18e31eaa and contains(@class, "height-content")]/text()'
-                    odds = event_row.xpath(odds_xpath)                    
+                    odds = event_row.xpath(odds_xpath)  
+
+                    match_date_xpath = './/div[contains(@class, "text-black-main font-main w-full truncate text-xs font-normal leading-5")]/text()'
+                    match_datee = event_row.xpath(match_date_xpath)                  
                     
 
                     if  len(teams) >= 2 :
@@ -76,19 +79,31 @@ def scrape_results(base_url, start_season, end_season):
                             home_score=home_scores[0]
                             away_scoress = event_row.xpath(away_score_xpath)
                             away_score=away_scoress[0]
-                            
 
+                        if(len(match_datee)==0):
+                            match_date=match_date_avant
+                        else:
+                            match_date=match_datee[0]
+                            match_date_avant=match_datee[0]
+
+
+                        championat=league
+                        saison=season
                         home_team = teams[0]  
                         away_team = teams[1] 
                         odd_1 = odds[0].strip()  
                         odd_x = odds[1].strip()  
                         odd_2 = odds[2].strip()
+                        print(f"Saison :{saison}")
+                        print(f"Championat :{championat}")
+                        print(f"match date :{match_date}")
                         print(f"Match time :{match_time[0]}")
                         print(f"{home_team} {home_score} - {away_score} {away_team}")
                         print(f"Cotes: 1: {odd_1}, X: {odd_x}, 2: {odd_2}")
                         print("-------------------------------------------------")
                     else:
                         print("Équipes, scores ou cotes non disponibles pour ce match.")
+                    
                 page += 1 
 
                  
@@ -97,4 +112,4 @@ def scrape_results(base_url, start_season, end_season):
 
 
 base_url = "https://www.oddsportal.com/football"
-scrape_results(base_url, 2018, 2019)
+scrape_results(base_url, 2003, 2024)
