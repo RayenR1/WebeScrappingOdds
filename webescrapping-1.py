@@ -49,13 +49,46 @@ def scrape_results(base_url, start_season, end_season):
                 event_rows = tree.xpath('//div[contains(@class, "eventRow")]')
 
                 if not event_rows:
-                    print(f"Aucun élément trouvé pour {league} {season} page {page}")
+                    print(f"Aucun element trouve pour {league} {season} page {page}")
                     
 
               
                 for event_row in event_rows:
-                    print(event_row.text_content())  
+                    #print(event_row.text_content())  
+                    match_time = event_row.xpath('.//p[@data-v-931a4162]/text()')
+                    
+                    teams = event_row.xpath('.//p[@class="participant-name truncate"]/text()')
+                    home_score_xpath = './/a[@title and contains(@class, "cursor-pointer")]//div[contains(@class, "font-bold")][2]/text()'
+                    away_score_xpath = './/a[@title and contains(@class, "cursor-pointer")]//div[contains(@class, "font-bold")][1]/text()'
 
+
+                    odds_xpath = './/p[@data-v-18e31eaa and contains(@class, "height-content")]/text()'
+                    odds = event_row.xpath(odds_xpath)                    
+                    
+
+                    if  len(teams) >= 2 :
+                        away_scores = event_row.xpath(away_score_xpath)
+                        if(len(away_scores)==2):
+                            home_score = away_scores[0]
+                            away_score = away_scores[1] 
+                        else:
+                            home_scores = event_row.xpath(home_score_xpath)
+                            home_score=home_scores[0]
+                            away_scoress = event_row.xpath(away_score_xpath)
+                            away_score=away_scoress[0]
+                            
+
+                        home_team = teams[0]  
+                        away_team = teams[1] 
+                        odd_1 = odds[0].strip()  
+                        odd_x = odds[1].strip()  
+                        odd_2 = odds[2].strip()
+                        print(f"Match time :{match_time[0]}")
+                        print(f"{home_team} {home_score} - {away_score} {away_team}")
+                        print(f"Cotes: 1: {odd_1}, X: {odd_x}, 2: {odd_2}")
+                        print("-------------------------------------------------")
+                    else:
+                        print("Équipes, scores ou cotes non disponibles pour ce match.")
                 page += 1 
 
                  
