@@ -1,3 +1,4 @@
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -5,11 +6,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import csv
 from lxml import html
 
 
 liges = ['france/ligue-1', 'europe/champions-league', 'europe/europa-league', 'england/premier-league', 'spain/laliga', 'germany/bundesliga', 'italy/serie-a']
+#liges=['france/ligue-1']
 
+data = []
 def scrape_results(base_url, start_season, end_season):
     
     chrome_options = ChromeOptions()
@@ -19,6 +23,7 @@ def scrape_results(base_url, start_season, end_season):
     service = ChromeService(driver_path)
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
+
     for league in liges:
         for year in range(start_season, end_season + 1):
             season = f"{year}-{year + 1}"  
@@ -30,7 +35,7 @@ def scrape_results(base_url, start_season, end_season):
                 driver.delete_all_cookies()  
                 driver.refresh() 
  
-                time.sleep(10) 
+                time.sleep(4) 
 
                 
                 page_source = driver.page_source
@@ -40,7 +45,7 @@ def scrape_results(base_url, start_season, end_season):
 
                
                 try:
-                    WebDriverWait(driver, 25).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "eventRow")]')))
+                    WebDriverWait(driver, 18).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "eventRow")]')))
                 except:
                     print(f"Erreur : aucune donnée trouvée sur {league} {season}, page {page}. Passer à la saison suivante.")
                     break  # Passer à la saison suivante si une erreur se produit
@@ -76,9 +81,9 @@ def scrape_results(base_url, start_season, end_season):
                             away_score = away_scores[1] 
                         else:
                             home_scores = event_row.xpath(home_score_xpath)
-                            home_score=home_scores[0]
+                            home_score = home_scores[0] if home_scores else "N/A"
                             away_scoress = event_row.xpath(away_score_xpath)
-                            away_score=away_scoress[0]
+                            away_score=away_scoress[0] if away_scores else "N/A"
 
                         if(len(match_datee)==0):
                             match_date=match_date_avant
@@ -91,18 +96,28 @@ def scrape_results(base_url, start_season, end_season):
                         saison=season
                         home_team = teams[0]  
                         away_team = teams[1] 
-                        odd_1 = odds[0].strip()  
-                        odd_x = odds[1].strip()  
-                        odd_2 = odds[2].strip()
+                        odd_1 = odds[0].strip()  if len(odds) >= 3 else "N/A"
+                        odd_x = odds[1].strip()  if len(odds) >= 3 else "N/A"
+                        odd_2 = odds[2].strip()  if len(odds) >= 3 else "N/A"
+                        if(home_score>away_score):
+                            Gangnant=1
+                        elif(home_score<away_score):
+                            Gangnant=2
+                        else:
+                            Gangnant=0
+                        data.append([saison, championat, match_date, match_time[0], home_team, home_score, away_score, away_team, odd_1, odd_x, odd_2,Gangnant])
+
                         print(f"Saison :{saison}")
                         print(f"Championat :{championat}")
                         print(f"match date :{match_date}")
                         print(f"Match time :{match_time[0]}")
                         print(f"{home_team} {home_score} - {away_score} {away_team}")
                         print(f"Cotes: 1: {odd_1}, X: {odd_x}, 2: {odd_2}")
+                        print(f"Gangnant :{Gangnant}")
                         print("-------------------------------------------------")
                     else:
                         print("Équipes, scores ou cotes non disponibles pour ce match.")
+                    
                     
                 page += 1 
 
@@ -111,5 +126,15 @@ def scrape_results(base_url, start_season, end_season):
     driver.quit()
 
 
+
+
 base_url = "https://www.oddsportal.com/football"
+#2003
 scrape_results(base_url, 2003, 2024)
+df = pd.DataFrame(data, columns=["Saison", "Championat", "Date", "Heure", "Équipe Domicile", "Score Domicile", "Score Extérieur", "Équipe Extérieur", "Cote 1", "Cote X", "Cote 2","Gangnant"])
+print(df)
+with open("C:/Users/jlassi/Desktop/datasetR1/matches.csv", "w", newline="") as f:
+    df.to_csv(f, index=False)
+    print("Les donnees ont ete exportees avec succes dans matches.csv")
+
+
