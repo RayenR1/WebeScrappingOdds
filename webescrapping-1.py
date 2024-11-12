@@ -99,12 +99,12 @@ def scrape_results(base_url, start_season, end_season):
                         odd_1 = odds[0].strip()  if len(odds) >= 3 else "N/A"
                         odd_x = odds[1].strip()  if len(odds) >= 3 else "N/A"
                         odd_2 = odds[2].strip()  if len(odds) >= 3 else "N/A"
-                        if(home_score>away_score):
-                            Gangnant=1
+                        if(home_score==away_score):
+                            Gangnant=0
                         elif(home_score<away_score):
                             Gangnant=2
                         else:
-                            Gangnant=0
+                            Gangnant=1
                         data.append([saison, championat, match_date, match_time[0], home_team, home_score, away_score, away_team, odd_1, odd_x, odd_2,Gangnant])
 
                         print(f"Saison :{saison}")

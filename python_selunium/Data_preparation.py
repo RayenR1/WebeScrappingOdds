@@ -13,15 +13,15 @@ data = pd.read_csv('matches.csv', sep=';', encoding='ISO-8859-1')
 data = data.dropna()
 
 # Séparation des caractéristiques (X) et de la cible (y)
-X = data.drop(columns=['Gangnant'])
+X = data.drop(columns=['Gangnant', 'Score Domicile', 'Score Extérieur'])
 y = data['Gangnant']  # Ne pas traiter la colonne cible
 
 # Encodage des variables catégorielles et scaling des variables numériques
 numerical_columns = X.select_dtypes(include=['float64', 'int64']).columns
 categorical_columns = X.select_dtypes(include=['object']).columns
 
-# OneHotEncoding pour les variables catégorielles
-onehot_encoder = OneHotEncoder(sparse_output=False, drop='first')
+# OneHotEncoding pour les variables catégorielles avec gestion des catégories inconnues
+onehot_encoder = OneHotEncoder(sparse_output=False, drop='first', handle_unknown='ignore')
 encoded_categorical_data = onehot_encoder.fit_transform(X[categorical_columns])
 encoded_categorical_df = pd.DataFrame(encoded_categorical_data,
                                       columns=onehot_encoder.get_feature_names_out(categorical_columns))
@@ -50,5 +50,55 @@ y_pred = model.predict(X_test)
 
 # Calcul du taux de réussite (accuracy)
 accuracy = accuracy_score(y_test, y_pred)
-
 print(f"Le taux de réussite du modèle sur les données de test est : {accuracy * 100:.2f}%")
+
+# Boucle de test avec des entrées utilisateur
+print("\n=== Tester le modèle avec des données personnalisées ===")
+print("Entrez les valeurs pour chaque variable, séparées par des virgules (ou 'exit' pour quitter) :\n")
+print("Format: Saison, Championat, Date, Heure, Équipe Domicile, Équipe Extérieur, Cote 1, Cote X, Cote 2")
+
+while True:
+    user_input = input("Données: ")
+    if user_input.lower() == 'exit':
+        print("Fin du programme.")
+        break
+
+    # Séparation des entrées par des virgules
+    input_values = user_input.split(',')
+
+    # Vérification que le nombre d'entrées est correct
+    if len(input_values) != 9:
+        print("Erreur : veuillez entrer exactement 9 valeurs.")
+        continue
+
+    # Extraction et nettoyage des données
+    saison, championat, date, heure, equipe_domicile, equipe_exterieur, cote_1, cote_x, cote_2 = map(str.strip, input_values)
+
+    # Conversion des cotes en float
+    try:
+        cote_1 = float(cote_1)
+        cote_x = float(cote_x)
+        cote_2 = float(cote_2)
+    except ValueError:
+        print("Erreur : les cotes doivent être des nombres.")
+        continue
+
+    # Création d'une liste pour les nouvelles données d'entrée
+    input_data = [cote_1, cote_x, cote_2]
+
+    # Création des données catégorielles
+    categorical_input = [saison, championat, date, heure, equipe_domicile, equipe_exterieur]
+
+    # Encodage et standardisation des nouvelles données
+    encoded_categorical_input = onehot_encoder.transform([categorical_input])
+    scaled_numerical_input = scaler.transform([input_data])
+
+    # Fusionner les nouvelles données encodées
+    full_input = pd.concat([pd.DataFrame(scaled_numerical_input), pd.DataFrame(encoded_categorical_input)], axis=1)
+
+    # Réduction avec PCA
+    reduced_input = pca.transform(full_input)
+
+    # Prédiction avec le modèle
+    prediction = model.predict(reduced_input)
+    print(f"\nLe modèle prédit un résultat de : {'Gagnant' if prediction[0] == 1 else 'Perdant'}\n")
